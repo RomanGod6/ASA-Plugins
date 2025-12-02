@@ -1,7 +1,10 @@
 #include <API/ARK/Ark.h>
+#include <json.hpp>
 #include <fstream>
 
 #pragma comment(lib, "AsaApi.lib")
+
+DECLARE_HOOK(AShooterGameMode_HandleNewPlayer, bool, AShooterGameMode*, AShooterPlayerController*, UPrimalPlayerData*, AShooterCharacter*, bool);
 
 namespace WelcomePlugin
 {
@@ -18,7 +21,7 @@ namespace WelcomePlugin
 	}
 
 	// Hook for when a player joins the server
-	DECLARE_HOOK(AShooterGameMode_HandleNewPlayer, bool, AShooterGameMode* _this, AShooterPlayerController* new_player,
+	bool Hook_AShooterGameMode_HandleNewPlayer(AShooterGameMode* _this, AShooterPlayerController* new_player,
 		UPrimalPlayerData* player_data, AShooterCharacter* player_character, bool is_from_login)
 	{
 		// Call original function
@@ -36,10 +39,10 @@ namespace WelcomePlugin
 					new_player->GetPlayerCharacterName(&playerName);
 
 					// Get server name from config
-					FString serverName = FString(ArkApi::Tools::Utf8Decode(config["General"]["ServerName"].get<std::string>()).c_str());
+					FString serverName = FString(AsaApi::Tools::Utf8Decode(config["General"]["ServerName"].get<std::string>()).c_str());
 
 					// Get welcome message template
-					FString welcomeMsg = FString(ArkApi::Tools::Utf8Decode(config["General"]["WelcomeMessage"].get<std::string>()).c_str());
+					FString welcomeMsg = FString(AsaApi::Tools::Utf8Decode(config["General"]["WelcomeMessage"].get<std::string>()).c_str());
 
 					// Format the message
 					FString formattedMsg = FormatMessage(welcomeMsg, playerName, serverName);
@@ -65,7 +68,7 @@ namespace WelcomePlugin
 	}
 
 	// Chat command: /serverinfo - Shows server information
-	void ServerInfoCommand(AShooterPlayerController* player_controller, FString* message, int mode)
+	void ServerInfoCommand(AShooterPlayerController* player_controller, FString* message, int mode, int)
 	{
 		if (!player_controller)
 			return;
@@ -81,10 +84,10 @@ namespace WelcomePlugin
 			// Build info message
 			FString infoMsg = FString::Format(
 				TEXT("=== {} ===\n{}\nWebsite: {}\nDiscord: {}"),
-				ArkApi::Tools::Utf8Decode(serverName).c_str(),
-				ArkApi::Tools::Utf8Decode(description).c_str(),
-				ArkApi::Tools::Utf8Decode(website).c_str(),
-				ArkApi::Tools::Utf8Decode(discord).c_str()
+				AsaApi::Tools::Utf8Decode(serverName).c_str(),
+				AsaApi::Tools::Utf8Decode(description).c_str(),
+				AsaApi::Tools::Utf8Decode(website).c_str(),
+				AsaApi::Tools::Utf8Decode(discord).c_str()
 			);
 
 			float textSize = config["General"]["TextSize"].get<float>();
@@ -103,6 +106,7 @@ namespace WelcomePlugin
 	// RCON command: welcomeplugin.reload - Reloads the plugin configuration
 	void ReloadConfigRcon(RCONClientConnection* rcon_connection, RCONPacket* rcon_packet, UWorld*)
 	{
+		FString reply;
 		try
 		{
 			// Read config file
@@ -110,19 +114,22 @@ namespace WelcomePlugin
 			std::ifstream file(config_path);
 			if (!file.is_open())
 			{
-				rcon_connection->SendMessageW(rcon_packet->Id, 0, L"Failed to open config file");
+				reply = "Failed to open config file";
+				rcon_connection->SendMessageW(rcon_packet->Id, 0, &reply);
 				return;
 			}
 
 			file >> config;
 			file.close();
 
-			rcon_connection->SendMessageW(rcon_packet->Id, 0, L"Configuration reloaded successfully");
+			reply = "Configuration reloaded successfully";
+			rcon_connection->SendMessageW(rcon_packet->Id, 0, &reply);
 			Log::GetLog()->info("WelcomePlugin configuration reloaded");
 		}
 		catch (const std::exception& ex)
 		{
-			rcon_connection->SendMessageW(rcon_packet->Id, 0, L"Failed to reload configuration");
+			reply = "Failed to reload configuration";
+			rcon_connection->SendMessageW(rcon_packet->Id, 0, &reply);
 			Log::GetLog()->error("Error reloading config: {}", ex.what());
 		}
 	}
@@ -160,8 +167,8 @@ namespace WelcomePlugin
 		LoadConfig();
 
 		// Register hooks
-		AsaApi::GetHooks().SetHook("AShooterGameMode.HandleNewPlayer_Implementation",
-			&AShooterGameMode_HandleNewPlayer,
+		AsaApi::GetHooks().SetHook("AShooterGameMode.HandleNewPlayer_Implementation(AShooterPlayerController*,UPrimalPlayerData*,AShooterCharacter*,bool)",
+			&Hook_AShooterGameMode_HandleNewPlayer,
 			&AShooterGameMode_HandleNewPlayer_original);
 
 		// Register chat commands
@@ -179,8 +186,8 @@ namespace WelcomePlugin
 		Log::GetLog()->info("Unloading WelcomePlugin...");
 
 		// Remove hooks
-		AsaApi::GetHooks().DisableHook("AShooterGameMode.HandleNewPlayer_Implementation",
-			&AShooterGameMode_HandleNewPlayer);
+		AsaApi::GetHooks().DisableHook("AShooterGameMode.HandleNewPlayer_Implementation(AShooterPlayerController*,UPrimalPlayerData*,AShooterCharacter*,bool)",
+			&Hook_AShooterGameMode_HandleNewPlayer);
 
 		// Remove commands
 		AsaApi::GetCommands().RemoveChatCommand("/serverinfo");

@@ -48,14 +48,14 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(SolutionDir)WelcomePlugin\Public;$(SolutionDir)..\..\ServerAPI\AsaApi\Core\Public\API;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)WelcomePlugin\Public;$(SolutionDir)..\..\ServerAPI\AsaApi\AsaApi\Core\Public;$(SolutionDir)..\..\ServerAPI\AsaApi\AsaApi\Core\Public\API;$(SolutionDir)..\..\ServerAPI\AsaApi\AsaApi\Core\Public\API\ARK;$(SolutionDir)..\..\ServerAPI\AsaApi\AsaApi\Core\Public\API\UE;$(SolutionDir)..\..\ServerAPI\AsaApi\AsaApi\Core\Public\Logger;$(SolutionDir)..\..\ServerAPI\AsaApi\AsaApi\vcpkg_installed\x64-windows-1439-static-md\x64-windows-1439-static-md\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)..\..\ServerAPI\AsaApi\Core\Public\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\..\ServerAPI\AsaApi\AsaApi\Core\Public\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(SolutionDir)$(Platform)\$(Configuration)\*.dll" "$(SolutionDir)..\Plugins\WelcomePlugin\" /y
